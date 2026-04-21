@@ -22,6 +22,7 @@ const (
 	defaultMaxConcurrency = 10
 	defaultMaxRetries     = 2
 	defaultRetryDelay     = 200 * time.Millisecond
+	maxRetryDelay         = 5 * time.Second
 	maxErrorBodyBytes     = 4096
 )
 
@@ -33,8 +34,12 @@ type Config struct {
 	AssistantID string
 	UserID      string
 
-	Timeout         time.Duration
-	MaxConcurrency  int
+	Timeout time.Duration
+	// MaxConcurrency caps concurrent in-flight requests per model instance.
+	// Values above 10 are clamped to 10 due to Yuanqi API limits.
+	MaxConcurrency int
+	// MaxRetries controls retry attempts for retryable network/HTTP errors.
+	// Use 0 to apply the default retry count.
 	MaxRetries      int
 	RetryBaseDelay  time.Duration
 	CustomVariables map[string]string
@@ -307,7 +312,18 @@ func (m *ChatModel) doRequest(ctx context.Context, body []byte) (*http.Response,
 }
 
 func (m *ChatModel) waitRetry(ctx context.Context, attempt int) error {
-	delay := m.retryDelay << attempt
+	delay := m.retryDelay
+	for i := 0; i < attempt; i++ {
+		if delay >= maxRetryDelay/2 {
+			delay = maxRetryDelay
+			break
+		}
+		delay *= 2
+	}
+	if delay > maxRetryDelay {
+		delay = maxRetryDelay
+	}
+
 	timer := time.NewTimer(delay)
 	defer timer.Stop()
 	select {
@@ -707,9 +723,7 @@ func mergeMaps(base, override map[string]string) map[string]string {
 }
 
 func intPtr(v int) *int {
-	p := new(int)
-	*p = v
-	return p
+	return &v
 }
 
 type chatRequest struct {
