@@ -154,12 +154,12 @@ func (m *ChatModel) Generate(ctx context.Context, input []*schema.Message, opts 
 		return nil, err
 	}
 
-	respBody, err := json.Marshal(req)
+	reqBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	resp, err := m.doRequest(ctx, respBody)
+	resp, err := m.doRequest(ctx, reqBody)
 	if err != nil {
 		return nil, err
 	}

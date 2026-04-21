@@ -64,7 +64,7 @@ func TestGenerateMappingAndOptions(t *testing.T) {
 		AppKey:          "test-app-key",
 		AssistantID:     "asst-1",
 		UserID:          "default-user",
-		CustomVariables: map[string]string{"A": "1"},
+		CustomVariables: map[string]string{"A": "1", "B": "0"},
 		MaxRetries:      1,
 	})
 	require.NoError(t, err)
