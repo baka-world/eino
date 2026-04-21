@@ -192,3 +192,16 @@ func TestWithToolsReturnsNewInstance(t *testing.T) {
 	require.Len(t, clone.tools, 1)
 	require.Len(t, m.tools, 0)
 }
+
+func TestNewChatModelRejectsNegativeRetries(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewChatModel(context.Background(), &Config{
+		AppKey:      "test-app-key",
+		AssistantID: "asst",
+		UserID:      "user",
+		MaxRetries:  -1,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "max retries cannot be negative")
+}

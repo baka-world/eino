@@ -96,7 +96,7 @@ func NewChatModel(_ context.Context, cfg *Config) (*ChatModel, error) {
 
 	maxRetries := cfg.MaxRetries
 	if maxRetries < 0 {
-		maxRetries = 0
+		return nil, errors.New("max retries cannot be negative")
 	}
 	if maxRetries == 0 {
 		maxRetries = defaultMaxRetries
@@ -532,8 +532,7 @@ func extractToolCalls(steps []chatStep, withIndex bool) []schema.ToolCall {
 				},
 			}
 			if withIndex {
-				idx := i
-				call.Index = &idx
+				call.Index = intPtr(i)
 			}
 
 			if tc.Function.Desc != "" || tc.Function.Type != "" {
@@ -551,9 +550,8 @@ func extractToolCalls(steps []chatStep, withIndex bool) []schema.ToolCall {
 func extractToolCallsFromDelta(calls []chatToolCall) []schema.ToolCall {
 	out := make([]schema.ToolCall, 0, len(calls))
 	for i, tc := range calls {
-		idx := i
 		call := schema.ToolCall{
-			Index: &idx,
+			Index: intPtr(i),
 			ID:    tc.ID,
 			Type:  tc.Type,
 			Function: schema.FunctionCall{
@@ -706,6 +704,12 @@ func mergeMaps(base, override map[string]string) map[string]string {
 		merged[k] = v
 	}
 	return merged
+}
+
+func intPtr(v int) *int {
+	p := new(int)
+	*p = v
+	return p
 }
 
 type chatRequest struct {
